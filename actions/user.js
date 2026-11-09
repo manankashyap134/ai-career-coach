@@ -60,7 +60,7 @@ export async function updateUser(data) {
     );
 
     revalidatePath("/");
-    return result.user;
+    return { success: true, ...result.updatedUser };
   } catch (error) {
     console.error("Error updating user and industry:", error.message);
     throw new Error("Failed to update profile");
@@ -70,12 +70,6 @@ export async function updateUser(data) {
 export async function getUserOnboardingStatus() {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
-
-  const user = await db.user.findUnique({
-    where: { clerkUserId: userId },
-  });
-
-  if (!user) throw new Error("User not found");
 
   try {
     const user = await db.user.findUnique({
@@ -87,6 +81,7 @@ export async function getUserOnboardingStatus() {
       },
     });
 
+    // New users won't have a DB record yet — treat them as not onboarded
     return {
       isOnboarded: !!user?.industry,
     };
